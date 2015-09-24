@@ -1,3 +1,5 @@
+// based on http://is.ifmo.ru/present/2012/20120218_model_checking_karpov_lecture02.pdf
+
 #define NMAX 1
 
 mtype = {incoin, cget, bget, recoin};
