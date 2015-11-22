@@ -7,18 +7,20 @@ using std::cin;
 using std::endl;
 
 template<typename T> T sorted(T&& mas) {
-  auto end = std::end(mas);
+  auto last = std::end(mas);
   for(auto outer_it = std::begin(mas);
-      outer_it != end;
+      outer_it != last;
       ++outer_it) {
     auto min_it = outer_it;
     auto inner_it = std::next(outer_it);
-    for(; inner_it != end; ++inner_it) {
+    for(; inner_it != last; ++inner_it) {
       if (*inner_it < *min_it) {
 	min_it = inner_it ;
       }
     }
-    std::swap(*outer_it, *min_it);
+
+    using std::swap;
+    swap(*outer_it, *min_it);
   }
 
   return mas;
