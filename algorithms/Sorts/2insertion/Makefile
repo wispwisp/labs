@@ -2,7 +2,7 @@
 
 NAME:=insertion.out
 CPP:=gcc
-CFLAGS:=-lstdc++ -std=c++11 -ggdb -Wall -Wextra -pedantic -O
+CFLAGS:=-lstdc++ -std=c++11 -ggdb -Wall -Wextra -Wshadow -pedantic -Weffc++ -O
 LIBS:=
 
 all: $(NAME)
