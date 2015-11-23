@@ -14,9 +14,10 @@ template<typename Cont> Cont sorted(Cont&& c) {
       ++outer_it) {
 
     auto min_it = outer_it;
-    auto inner_it = std::next(outer_it);
+    for(auto inner_it = std::next(outer_it);
+	inner_it != last;
+	++inner_it) {
 
-    for(; inner_it != last; ++inner_it) {
       if (*inner_it < *min_it) {
 	min_it = inner_it ;
       }
