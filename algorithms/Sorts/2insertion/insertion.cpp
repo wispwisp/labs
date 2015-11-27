@@ -2,19 +2,36 @@
 #include <iterator>
 #include <vector>
 
+
 using std::cout;
 using std::cin;
 using std::endl;
 
+
 template <typename Cont> Cont sorted(Cont&& c) {
-  for (auto outer_it = std::begin(c);
-       outer_it != std::end(c);
-       ++outer_it) {
-    ; // todo
+  using std::swap;
+
+  // sink minimum
+  for (auto i = c.rbegin(); i != c.rend(); ++i) {
+    auto p = std::next(i);
+    if (*i < *p)
+      swap(*i, *p);
+  }
+
+  auto first = std::begin(c);
+  for (auto i = first + 2; i != std::end(c); ++i) {
+    auto j = i;
+    auto v = *i;
+    while (v < *std::prev(j)) {
+      *j = *std::prev(j);
+      --j;
+    }
+    *j = v;
   }
 
   return c;
 }
+
 
 int main () {
 
