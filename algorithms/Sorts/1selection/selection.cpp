@@ -9,22 +9,20 @@ using std::endl;
 template<typename Cont> Cont sorted(Cont&& c) {
 
   auto last = std::end(c);
-  for(auto outer_it = std::begin(c);
-      outer_it != last;
-      ++outer_it) {
+  for(auto current = std::begin(c);
+      current != last;
+      ++current) {
 
-    auto min_it = outer_it;
-    for(auto inner_it = std::next(outer_it);
-	inner_it != last;
-	++inner_it) {
-
-      if (*inner_it < *min_it) {
-	min_it = inner_it ;
-      }
+    // find minimum
+    auto min = current;
+    for(auto it = std::next(current); it != last; ++it) {
+      if (*it < *min)
+	min = it ;
     }
 
+    // swap current with minimum
     using std::swap;
-    swap(*outer_it, *min_it);
+    swap(*current, *min);
   }
 
   return c;
