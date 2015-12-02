@@ -10,7 +10,7 @@ template <typename Cont> Cont sorted(Cont&& c) {
   // sink minimum (signal value - no check for last element...
   // in next cycle... j < p will trigger anyway on first element)
   auto min = std::begin(c);
-  for (auto i = min; i != std::end(c); ++i) {
+  for (auto i = std::next(min); i != std::end(c); ++i) {
     if (*i < *min)
       min = i;
   }
