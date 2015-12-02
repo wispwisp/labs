@@ -27,6 +27,8 @@ template <typename Cont> Cont sorted(Cont&& c) {
       --p;
     }
   }
+
+
 #else // with check for first element
   auto first = std::begin(c);
   for (auto i = first; i != std::end(c); ++i) {
