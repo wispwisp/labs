@@ -34,8 +34,8 @@ int main() {
   vec = sorted(std::move(vec));
 
   cout << "sorted: " << endl;
-  std::ostream_iterator<int, char> outIter(std::cout, ", ");
-  std::copy(std::begin(vec), std::end(vec), outIter);
+  std::copy(std::begin(vec), std::end(vec),
+	    std::ostream_iterator<int>(std::cout, " "));
   cout << endl;
 
   return 0 ;
