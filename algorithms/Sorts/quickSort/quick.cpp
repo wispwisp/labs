@@ -20,8 +20,9 @@ template<typename Iter> Iter partition(Iter l, Iter r) {
     if (i >= j) break;
     swap(*i, *j);
   }
-  
-  swap(*i, *r);
+
+  if (i != r)
+    swap(*i, *r);
 
   return i;
 }
