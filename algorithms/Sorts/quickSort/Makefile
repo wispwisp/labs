@@ -2,7 +2,7 @@
 
 NAME:=quick.out 
 CPP:=gcc
-CFLAGS:=-lstdc++ -std=c++11 -ggdb -Wall -Wextra -Wshadow -pedantic -Weffc++ -O0
+CFLAGS:=-lstdc++ -std=c++14 -ggdb -Wall -Wextra -Wshadow -pedantic -Weffc++ -O0
 LIBS:=
 
 all : $(NAME)
