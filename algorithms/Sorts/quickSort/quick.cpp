@@ -37,8 +37,12 @@ template<typename Iter> void qsorted(Iter l, Iter r) {
 }
 
 template<typename Cont> Cont sorted(Cont c) {
-  if (!c.empty())
-    qsorted(std::begin(c), std::prev(std::end(c)));
+
+  auto b = std::begin(c);
+  auto e = std::end(c);
+  if (b != e)
+    qsorted(b, std::prev(e));
+
   return c;
 }
 
