@@ -1,0 +1,8 @@
+(defun my-extract-class (class-name)
+  (interactive "sClass name: ")
+  (kill-region (region-beginning) (region-end))
+  (insert (concat "class " class-name " {\n"))
+  (yank)
+  (insert "\n};\n")
+  (insert class-name " m_" class-name ";")
+  (indent-region 1 (point-max)))
