@@ -143,4 +143,86 @@ BOOST_AUTO_TEST_CASE(TestThree) {
                 GraphVisitor<Graph, VertexContent, EdgesContent>(g, vertex_content, edge_content));
 }
 
+BOOST_AUTO_TEST_CASE(TestUniqueEdges) {
+  struct VertexContent {
+    std::string name = "";
+  };
+
+  struct vertex_property_t {
+    using kind = boost::vertex_property_tag;
+  };
+
+  struct EdgeContent {
+    std::string name1 = "";
+    std::string name2 = "";
+  };
+
+  struct edge_property_t {
+    using kind = boost::edge_property_tag;
+  };
+
+  // <tag, type>
+  using VertexProperty = boost::property<vertex_property_t, VertexContent>;
+  using EdgeProperty = boost::property<edge_property_t, EdgeContent>;
+
+  // template <class OutEdgeListS = vecS,
+  //           class VertexListS = vecS,
+  //           class DirectedS = directedS,
+  //           class VertexProperty = no_property,
+  //           class EdgeProperty = no_property,
+  //           class GraphProperty = no_property,
+  //           class EdgeListS = listS>
+  using Graph =
+      boost::adjacency_list<boost::hash_setS, boost::vecS, boost::directedS,
+                            VertexProperty, EdgeProperty>;
+  Graph g;
+
+  // get property maps
+  const auto &vertices = boost::get(vertex_property_t(), g);
+  const auto &edges = boost::get(edge_property_t(), g);
+
+  using Vertex = boost::graph_traits<Graph>::vertex_descriptor;
+  using Edge = boost::graph_traits<Graph>::edge_descriptor;
+
+  auto v = boost::add_vertex(g);
+  auto u = boost::add_vertex(g);
+  vertices[v].name = "1";
+  vertices[u].name = "2";
+
+  bool inserted;
+  Edge edge;
+
+  std::tie(edge, inserted) = add_edge(v, u, g);
+  if (inserted) {
+    edges[edge].name1 = vertices[boost::source(edge, g)].name;
+    edges[edge].name2 = vertices[boost::target(edge, g)].name;
+  } else
+    std::cout << "* Cannot add ununique\n";
+
+  // add ununique
+  std::tie(edge, inserted) = add_edge(v, u, g);
+  BOOST_ASSERT(not inserted);
+
+  // add inverted direction
+  std::tie(edge, inserted) = add_edge(u, v, g);
+  BOOST_ASSERT(inserted);
+  edges[edge].name1 = vertices[boost::source(edge, g)].name;
+  edges[edge].name2 = vertices[boost::target(edge, g)].name;
+
+  BOOST_ASSERT(boost::num_vertices(g) == 2);
+  BOOST_ASSERT(boost::num_edges(g) == 2);
+
+  std::cout << "Vertices:\n";
+  std::for_each(
+      boost::vertices(g).first, boost::vertices(g).second,
+      [&](const Vertex &d) { std::cout << "-" << vertices[d].name << "\n"; });
+
+  std::cout << "Edges:\n";
+  std::for_each(
+      boost::edges(g).first, boost::edges(g).second, [&](const Edge &d) {
+        std::cout << "- (" << edges[d].name1 << ", " << edges[d].name2 << ")\n";
+      });
+}
+
 BOOST_AUTO_TEST_SUITE_END()
+
