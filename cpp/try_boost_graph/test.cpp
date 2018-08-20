@@ -224,5 +224,52 @@ BOOST_AUTO_TEST_CASE(TestUniqueEdges) {
       });
 }
 
+BOOST_AUTO_TEST_CASE(TestBundledProperties) {
+  struct VertexContent {
+    std::string name = "uninit";
+  };
+
+  struct EdgeContent {
+    std::string name1 = "uninit";
+    std::string name2 = "uninit";
+  };
+
+  struct GraphContent {
+    std::string name = "uninit";
+  } gc;
+
+  using Graph = boost::adjacency_matrix<boost::undirectedS,
+                                        VertexContent, EdgeContent, GraphContent>;
+
+  Graph g(2, gc);
+  Graph::vertex_descriptor v = boost::vertex(0, g);
+  Graph::vertex_descriptor u = boost::vertex(1, g);
+  g[v].name = "vertex1";
+  g[u].name = "vertex2";
+
+  bool inserted;
+  Graph::edge_descriptor edge;
+  std::tie(edge, inserted) = add_edge(v, u, g); // t <-- s (?)
+  if (inserted) {
+    g[edge].name1 = g[boost::source(edge, g)].name;
+    g[edge].name2 = g[boost::target(edge, g)].name;
+  }
+  BOOST_ASSERT(inserted == true);
+
+  std::cout << "Vertices:\n";
+  std::for_each(boost::vertices(g).first, boost::vertices(g).second,
+                [&](Graph::vertex_descriptor d) {
+                  std::cout << "* " << g[d].name << "\n";
+                });
+
+  std::cout << "Edges:\n";
+  std::for_each(boost::edges(g).first, boost::edges(g).second,
+                [&](Graph::edge_descriptor d) {
+                  std::cout << "* (" << g[d].name1 << ", " << g[d].name2 << ")\n";
+                  BOOST_ASSERT(g[boost::source(d, g)].name == g[d].name2); // t <-- s (?)
+                  BOOST_ASSERT(g[boost::target(d, g)].name == g[d].name1);
+                });
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
