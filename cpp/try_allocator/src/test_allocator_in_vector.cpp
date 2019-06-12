@@ -20,7 +20,7 @@ struct AllocatorInVectorTests : public testing::Test
 
 TEST_F(AllocatorInVectorTests, MemoryEnds)
 {
-  ASSERT_THROW(vector.push_back(0), std::exception);
+  ASSERT_ANY_THROW(vector.push_back(0));
 }
 
 TEST_F(AllocatorInVectorTests, MemoryExactResize)
@@ -35,7 +35,7 @@ TEST_F(AllocatorInVectorTests, MemoryResizeToZero)
 
 TEST_F(AllocatorInVectorTests, MemoryEndsForResize)
 {
-  ASSERT_THROW(vector.resize(11), std::exception);
+  ASSERT_ANY_THROW(vector.resize(11));
 }
 
 TEST(AllocatorInVectorTest, MemoryEndsForOverResizeFirstTime)
@@ -43,7 +43,7 @@ TEST(AllocatorInVectorTest, MemoryEndsForOverResizeFirstTime)
   static constexpr std::size_t N = 10;
   std::vector<int, MyAllocator<int, N>> v;
 
-  ASSERT_THROW(v.resize(N+1), std::exception);
+  ASSERT_ANY_THROW(v.resize(N+1));
 }
 
 TEST(AllocatorInVectorTest, MemoryEndsForOverReserveFirstTime)
@@ -51,5 +51,5 @@ TEST(AllocatorInVectorTest, MemoryEndsForOverReserveFirstTime)
   static constexpr std::size_t N = 10;
   std::vector<int, MyAllocator<int, N>> v;
 
-  ASSERT_THROW(v.reserve(N+1), std::exception);
+  ASSERT_ANY_THROW(v.reserve(N+1));
 }
