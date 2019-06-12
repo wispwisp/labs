@@ -8,7 +8,12 @@ LIBS:=-lgtest -lgmock -lpthread
 
 all: $(TEST)
 
-$(TEST): tests.cpp
+FILES:=\
+tests.cpp \
+test_allocator_in_set.cpp \
+test_allocator_in_vector.cpp
+
+$(TEST): $(FILES)
 	$(CPP) $(CFLAGS) -o $@ $^ $(LIBS)
 
 clean :
