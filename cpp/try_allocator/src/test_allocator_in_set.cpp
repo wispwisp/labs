@@ -3,12 +3,14 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+using ::testing::Eq;
+
 
 struct AllocatorInSetTests : public testing::Test
 {
   static constexpr std::size_t N = 10;
   using Key = int;
-  std::set<Key, std::less<Key>, MyAllocator<Key, N>> set{};
+  std::set<Key, std::less<Key>, IrretrievableAllocator<Key, N>> set{};
 
   void SetUp() override {
     for (std::size_t i=0; i < N; i++)
@@ -33,6 +35,8 @@ TEST_F(AllocatorInSetTests, SharedStateAfterMoveMemoryEnds)
 {
   decltype(set) moved = std::move(set);
 
+  ASSERT_THAT(set.empty(), Eq(true));
+
   ASSERT_THROW(moved.insert(99), std::bad_alloc);
 }
 
@@ -55,7 +59,7 @@ TEST(AllocatorInSetTest, SharedStateAfterCopyMemoryHalf)
   static constexpr std::size_t N = 10;
   static constexpr std::size_t half = N / 2;
   using Key = int;
-  std::set<Key, std::less<Key>, MyAllocator<Key, N>> set{};
+  std::set<Key, std::less<Key>, IrretrievableAllocator<Key, N>> set{};
 
   for (std::size_t i=0; i < half; i++)
     set.insert(i);

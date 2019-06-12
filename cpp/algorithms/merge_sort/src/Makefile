@@ -9,10 +9,7 @@ LIBS:=-lgtest -lgmock -lpthread
 all: $(TEST)
 
 FILES:=\
-tests.cpp \
-test_allocator_in_set.cpp \
-test_allocator_in_vector.cpp \
-test_allocator_traits.cpp
+tests.cpp
 
 $(TEST): $(FILES)
 	$(CPP) $(CFLAGS) -o $@ $^ $(LIBS)

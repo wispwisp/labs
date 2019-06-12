@@ -4,108 +4,124 @@
 #include <memory>
 #include <vector>
 
-// #define DEBUG_PRINT
+#include <cstring> // memcpy
+
+#define DEBUG_PRINT
 #ifdef DEBUG_PRINT
 #include <iostream>
 #endif
 
-
 template <class T, std::size_t N>
-struct MyAllocator {
-  using value_type = T;
-  using pointer = T*;
-  using const_pointer = const T*;
-  using reference = T&;
-  using const_reference = const T&;
-  using size_type = std::size_t;
-  using difference_type = std::ptrdiff_t;
+struct IrretrievableAllocator {
 
-  struct SharedState {
-    SharedState(std::size_t sz) : memory(sz) {
-#ifdef DEBUG_PRINT
-      std::cout << "Shared state created, memory limit: " << sz << std::endl;
-#endif
+  using value_type = T;
+
+  using propagate_on_container_copy_assignment = std::true_type;
+  using propagate_on_container_move_assignment = std::true_type;
+  using propagate_on_container_swap = std::true_type;
+
+  using is_always_equal = std::false_type;
+
+  ~IrretrievableAllocator() {
+    if (memory)
+      std::free(memory);
+  }
+
+  IrretrievableAllocator()
+    : index(0), memory(static_cast<T*>(std::malloc(N * sizeof(T)))) {}
+
+  IrretrievableAllocator(IrretrievableAllocator&& other)
+    : index(other.index), memory(other.memory) {
+
+    other.index = 0;
+    other.memory = nullptr;
+  }
+
+  IrretrievableAllocator(const IrretrievableAllocator& other)
+    : index(other.index),
+      memory(static_cast<T*>(std::malloc(N * sizeof(T)))) {
+
+    // copy underlying memory (why? its cleared anyway)
+    std::memcpy(memory, other.memory, sizeof(T) * index);
+  }
+
+  IrretrievableAllocator& operator= (const IrretrievableAllocator& other) {
+    if (this != &other) {
+      index = other.index;
+      memory = static_cast<T*>(std::malloc(N * sizeof(T)));
+
+      // copy underlying memory (why? its cleared anyway)
+      std::memcpy(memory, other.memory, sizeof(T) * index);
     }
 
-    std::size_t index = 0;
-    std::vector<T> memory;
-  };
+    return *this;
+  }
 
-  MyAllocator() : shared_state(std::make_shared<SharedState>(N)) {}
+  IrretrievableAllocator& operator= (IrretrievableAllocator&& other) {
+    if (this != &other) {
+      index = other.index;
+      memory = other.memory;
+
+      other.index = 0;
+      other.memory = nullptr;
+    }
+
+    return *this;
+  }
 
   // rebind allocator to type U
+  // example: rebind from T to node<T> in list container.
   template <class U>
   struct rebind {
-    typedef MyAllocator<U, N> other;
+    typedef IrretrievableAllocator<U, N> other;
   };
 
-  // return address of values
-  pointer address (reference value) const {
-    return &value;
-  }
-
-  const_pointer address (const_reference value) const {
-    return &value;
-  }
-
   // return maximum number of elements that can be allocated
-  size_type max_size () const noexcept {
-    return shared_state->memory.size();
+  std::size_t max_size() const noexcept {
+    return N;
   }
 
-  // allocate but don't initialize num elements of type T
-  pointer allocate(size_type num, const void * = 0) {
-    if ((shared_state->index + num) > shared_state->memory.size())
+  T* allocate(std::size_t num) {
+    std::size_t end = index + num;
+
+    if (end > N)
       throw std::bad_alloc();
 
-#ifdef DEBUG_PRINT
-    std::cout << "allocate " << num << " element(s)"
-              << " of size " << sizeof(T) << std::endl;
-#endif
-
-    pointer ret = &shared_state->memory.at(shared_state->index);
-    shared_state->index += num;
+    T* ret = memory + index;
+    index = end;
 
 #ifdef DEBUG_PRINT
-    std::cout << "allocated at: " << (void *)ret << std::endl;
-    std::cout << "Memory remains: " <<  shared_state->index
-              << " Of " << N << std::endl;
+    {
+      std::cout << "* allocate " << num << " element(s)"
+                << " of size " << sizeof(T) << "; "
+                << "allocated at: " << (void *)ret << "; "
+                << "Memory remains: " <<  index
+                << " Of " << N << std::endl;
+    }
 #endif
 
     return ret;
   }
 
-  // initialize elements of allocated storage p with value value
-  void construct (pointer p, const T& value) {
-    *p = T(value);
+  void deallocate(T*, std::size_t) {
+    ; // Irretrievable
   }
 
-  // destroy elements of initialized storage p
-  void destroy (pointer p) {
-    p->~T();
-  }
-
-  // deallocate storage p of deleted elements
-  void deallocate(pointer, size_type) {
-#ifdef DEBUG_PRINT
-    std::cout << "dealocation called\n";
-#endif
-  }
-
-private:
-  std::shared_ptr<SharedState> shared_state;
+  std::size_t index;
+  T* memory = nullptr;
 };
 
-// return that all specializations of this allocator are interchangeable
-// template <class T1, class T2>
-// bool operator== (const MyAllocator<T1, N>& lhs,
-//                  const MyAllocator<T2, N>& rhs) noexcept {
-//   return lhs.shared_state == rhs.shared_state;
-// }
-// template <class T1, class T2>
-// bool operator!= (const MyAllocator<T1>& lhs,
-//                  const MyAllocator<T2>& rhs) noexcept {
-//   return not(lhs == rhs);
-// }
+// compare to check that all specializations of this allocator are interchangeable
+template <class T, std::size_t N>
+bool operator== (const IrretrievableAllocator<T, N>& lhs,
+                 const IrretrievableAllocator<T, N>& rhs) {
+  return lhs.memory == rhs.memory;
+}
+
+template <class T, std::size_t N>
+bool operator!= (const IrretrievableAllocator<T, N>& lhs,
+                 const IrretrievableAllocator<T, N>& rhs) {
+  return not(lhs == rhs);
+}
 
 #endif // MY_ALLOC_HPP
