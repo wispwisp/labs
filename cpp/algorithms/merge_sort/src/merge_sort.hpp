@@ -57,7 +57,7 @@ namespace merge_sort {
     if (hi <= lo)
       return;
 
-    std::size_t mid = lo + (hi - lo) / 2;
+    std::size_t mid = lo + ((hi - lo) / 2);
 
     #ifdef DEBUG_PRINT
         std::cout << "s(a, aux, lo=" << lo
