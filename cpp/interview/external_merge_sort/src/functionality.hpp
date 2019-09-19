@@ -8,6 +8,143 @@
 #include <string>
 #include <vector>
 
+template<class T, std::size_t N>
+class File {
+public:
+  using data_type = T;
+
+  File(std::string name_)
+    : name(std::move(name_)) {}
+
+  std::size_t size_in_elements() const noexcept {
+    return file_size / bytes;
+  }
+
+protected:
+  std::size_t bytes = sizeof(T);
+  std::string name;
+
+  std::size_t file_size = 0;
+
+  std::size_t pos = 0;
+  std::array<T, N> buffer{};
+};
+
+template<class T, std::size_t N = 10000>
+class InFile : public File<T, N> {
+public:
+  InFile(std::string name_, std::size_t place=0)
+    : File<T, N>(std::move(name_)),
+      file(this->name, std::ios::binary | std::ios::ate) {
+
+    if (not file.good())
+      throw std::logic_error("File error");
+
+    this->file_size = file.tellg();
+    file.seekg(place * this->bytes);
+
+    // initial read
+    this->file.read((char*)this->buffer.data(), this->bytes * N);
+  }
+
+  T read() {
+    if (this->pos == this->size_in_elements())
+      throw std::logic_error("Wrong file boundary");
+
+    T r = this->buffer[this->pos++];
+
+    if (this->pos == N) {
+      if (not this->file.good())
+        throw std::logic_error("Wrong file boundary");
+
+      this->file.read((char*)this->buffer.data(), this->bytes * N);
+      this->pos = 0;
+    }
+
+    return r;
+  }
+
+  std::vector<T> read(std::size_t amount) {
+    if ((this->pos + amount) > this->size_in_elements())
+      throw std::logic_error("Wrong file boundary");
+
+    std::vector<T> values(amount);
+    std::size_t i = 0;
+
+    while(i < amount) {
+      values[i++] = this->buffer[this->pos++];
+
+      if (this->pos == N) {
+        if (not this->file.good())
+          throw std::logic_error("Wrong file boundary3");
+
+        this->file.read((char*)this->buffer.data(), this->bytes * N);
+        this->pos = 0;
+      }
+    }
+
+    return values;
+  }
+
+  const T& unshifted_read() {
+    return this->buffer[this->pos];
+  }
+
+private:
+  std::ifstream file{};
+};
+
+template<class T, std::size_t N = 10000>
+class OutFile : public File<T, N> {
+public:
+  OutFile(std::string name_)
+    : File<T, N>(std::move(name_)),
+    file(this->name, std::ios::binary | std::ios::ate) {
+
+    if (not file.good())
+      throw std::logic_error("File error");
+
+    this->file_size = file.tellp();
+    file.seekp(0);
+  }
+
+  ~OutFile() {
+    if (not flushed)
+      this->file.write((char*)this->buffer.data(),
+                       this->bytes * this->pos);
+  }
+
+  OutFile(const OutFile&) = delete;
+  OutFile(OutFile&&) = delete;
+  OutFile& operator=(const OutFile&) = delete;
+  OutFile& operator=(OutFile&&) = delete;
+
+  void write(const T& t) {
+    flush();
+    this->buffer[this->pos++] = t;
+    flushed = false; // todo
+  }
+
+  void write(const std::vector<T>& values) {
+    flush();
+    file.write((const char*)values.data(), this->bytes * values.size());
+  }
+
+
+private:
+  void flush() {
+    if (this->pos == N) {
+      this->file.write((char*)this->buffer.data(), this->bytes * N);
+      this->pos = 0;
+      flushed = true;
+    }
+  }
+
+  bool flushed = true;
+  std::ofstream file{};
+};
+
+
 template<class T>
 class ExternalSort {
  public:
@@ -69,20 +206,8 @@ private:
   std::vector<T> read_values(const std::string &file_name,
                              std::size_t lo, std::size_t hi) const {
 
-    std::ifstream input_file(file_name, std::ios::binary);
-    input_file.seekg(lo * bytes);
-
-    std::size_t sz = hi - lo;
-    std::vector<T> values(sz);
-
-    for (std::size_t i=0; i<sz; i++) {
-      input_file.read((char*)&values[i], bytes);
-
-      if (not input_file.good())
-        throw std::logic_error("Wrong file boundary");
-    }
-
-    return values;
+    InFile<T> input_file(file_name, lo);
+    return input_file.read(hi - lo);
   }
 
   std::string make_file_name(std::size_t lo,std::size_t hi) const {
@@ -103,41 +228,18 @@ private:
     auto values = read_values(input_file_name, lo, hi);
     std::sort(values.begin(), values.end());
 
-    std::ofstream out_file(fname, std::ios::binary);
-    for (const auto& v : values)
-      out_file.write((const char*)&v, bytes);
+    OutFile<T> out_file(fname);
+    out_file.write(values);
   }
 
-  void from_auxiliary_to_merged(std::ifstream& aux,
-                                std::ofstream& merged) const {
-    T t;
-    aux.read((char*)&t, bytes);
-    merged.write((const char*)&t, bytes);
+  void from_auxiliary_to_merged(InFile<T>& aux, OutFile<T>& merged) const {
+    merged.write(aux.read());
   }
-
-  T get_value(std::ifstream& aux) const {
-    auto save = aux.tellg();
-
-    T t;
-    aux.read((char*)&t, bytes);
-    aux.seekg(save);
-
-    return t;
-  };
 
   void merge(std::size_t lo, std::size_t mid, std::size_t hi) const {
-    // sub aux-merged files
-    std::ifstream lhs(make_file_name(lo, mid), std::ios::binary);
-    if (not lhs.good())
-      throw std::logic_error("file not exists");
-
-    std::ifstream rhs(make_file_name(mid, hi), std::ios::binary);
-    if (not rhs.good())
-      throw std::logic_error("file not exists");
-
-    // output file
-    auto fname = make_file_name_by_borders_checking(lo, hi);
-    std::ofstream merged(fname, std::ios::binary);
+    InFile<T> lhs(make_file_name(lo, mid));
+    InFile<T> rhs(make_file_name(mid, hi));
+    OutFile<T> merged(make_file_name_by_borders_checking(lo, hi));
 
     // merge
     std::size_t i = lo, j = mid;
@@ -148,7 +250,7 @@ private:
       } else if (j >= hi) {
         from_auxiliary_to_merged(lhs, merged);
         i++;
-      } else if (get_value(rhs) < get_value(lhs)) {
+      } else if (rhs.unshifted_read() < lhs.unshifted_read()) {
         from_auxiliary_to_merged(rhs, merged);
         j++;
       } else {

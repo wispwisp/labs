@@ -150,10 +150,7 @@ TEST_F(ExternalSortBaseTest, Empty)
   std::ofstream outfile(output_file_name, std::ios::binary | std::ios::trunc);
 
   ExternalSort<std::uint32_t> sort(input_file_name, output_file_name);
-  sort.run();
-
-  auto values = read_values(output_file_name);
-  assert_correctness(values, {});
+  EXPECT_ANY_THROW(sort.run());
 }
 
 TEST_F(ExternalSortBaseTest, OneValue)
@@ -248,7 +245,7 @@ TEST_F(ExternalSortBaseTest, Ones)
 TEST_F(ExternalSortBaseTest, Randoms)
 {
   using T = std::uint32_t;
-  std::size_t N = 4455;
+  std::size_t N = 44455;
 
   std::random_device rd;
   std::mt19937_64 gen(rd());
@@ -265,7 +262,7 @@ TEST_F(ExternalSortBaseTest, Randoms)
   }
 
   ExternalSort<T> sort(input_file_name, output_file_name);
-  sort.reset_inplace_border(64);
+  sort.reset_inplace_border(164);
   sort.run();
 
   std::vector<T> values;
