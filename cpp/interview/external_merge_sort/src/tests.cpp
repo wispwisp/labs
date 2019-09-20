@@ -149,8 +149,9 @@ TEST_F(ExternalSortBaseTest, Empty)
 {
   std::ofstream outfile(output_file_name, std::ios::binary | std::ios::trunc);
 
-  ExternalSort<std::uint32_t> sort(input_file_name, output_file_name);
-  EXPECT_ANY_THROW(sort.run());
+  EXPECT_ANY_THROW(
+    ExternalSort<std::uint32_t> sort(input_file_name, output_file_name)
+  );
 }
 
 TEST_F(ExternalSortBaseTest, OneValue)

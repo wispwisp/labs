@@ -30,7 +30,7 @@ protected:
   std::array<T, N> buffer{};
 };
 
-template<class T, std::size_t N = 10000>
+template<class T, std::size_t N = 100>
 class InFile : public File<T, N> {
 public:
   InFile(std::string name_, std::size_t place=0)
@@ -76,7 +76,7 @@ public:
 
       if (this->pos == N) {
         if (not this->file.good())
-          throw std::logic_error("Wrong file boundary3");
+          throw std::logic_error("Wrong file boundary");
 
         this->file.read((char*)this->buffer.data(), this->bytes * N);
         this->pos = 0;
@@ -94,7 +94,7 @@ private:
   std::ifstream file{};
 };
 
-template<class T, std::size_t N = 10000>
+template<class T, std::size_t N = 100>
 class OutFile : public File<T, N> {
 public:
   OutFile(std::string name_)
@@ -152,16 +152,8 @@ class ExternalSort {
                std::string output_file_name_)
     : input_file_name(input_file_name_),
       output_file_name(output_file_name_),
-      input_file_size(file_size(input_file_name))
+      input_file_size(InFile<T>(input_file_name).size_in_elements())
   {}
-
-  std::size_t file_size(const std::string& fname) const {
-    std::ifstream file(fname, std::ios::binary | std::ios::ate);
-    if (not file.good())
-      return 0;
-
-    return file.tellg() / bytes;
-  }
 
   void run() const {
     if (input_file_size <= inplace_border)
@@ -203,13 +195,6 @@ private:
     merge(lo, mid, hi);
   }
 
-  std::vector<T> read_values(const std::string &file_name,
-                             std::size_t lo, std::size_t hi) const {
-
-    InFile<T> input_file(file_name, lo);
-    return input_file.read(hi - lo);
-  }
-
   std::string make_file_name(std::size_t lo,std::size_t hi) const {
     return std::to_string(lo) + "_" + std::to_string(hi);
   }
@@ -225,7 +210,8 @@ private:
   void inplace_sort(std::size_t lo, std::size_t hi,
                     const std::string& fname) const {
 
-    auto values = read_values(input_file_name, lo, hi);
+    InFile<T> input_file(input_file_name, lo);
+    auto values = input_file.read(hi - lo);
     std::sort(values.begin(), values.end());
 
     OutFile<T> out_file(fname);
