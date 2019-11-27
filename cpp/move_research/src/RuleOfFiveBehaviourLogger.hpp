@@ -21,7 +21,7 @@ struct RuleOfFiveBehaviourLogger {
 #endif
   }
 
-  RuleOfFiveBehaviourLogger(RuleOfFiveBehaviourLogger&& other)
+  RuleOfFiveBehaviourLogger(RuleOfFiveBehaviourLogger&& other) noexcept
     : counter(other.counter), id(other.id) {
 
 #ifdef DEBUG_PRINT
@@ -51,7 +51,7 @@ struct RuleOfFiveBehaviourLogger {
     return *this;
   }
 
-  RuleOfFiveBehaviourLogger& operator= (RuleOfFiveBehaviourLogger&& other) {
+  RuleOfFiveBehaviourLogger& operator= (RuleOfFiveBehaviourLogger&& other) noexcept {
     counter = other.counter;
     id = other.id;
 
