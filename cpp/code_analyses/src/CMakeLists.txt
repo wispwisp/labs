@@ -1,30 +1,63 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.8)
 
-project(move_research)
-
-
-# target executable
-set(SOURCE_EXE tests.cpp)
+project(move_research LANGUAGES CXX)
 
 
-# external libs
 find_library(GTEST_LIBRARY gtest)
 find_library(GMOCK_LIBRARY gmock)
 find_library(PTHREAD_LIBRARY pthread)
 
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED on)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wshadow -pedantic -Werror -Weffc++ -O2")
+# ************
+# * Test debug
+add_executable(tests2 tests.cpp)
+
+set_target_properties(tests2 PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
+
+target_compile_definitions(tests2
+  PRIVATE _GLIBCXX_DEBUG
+  PRIVATE _GLIBCXX_DEBUG_PEDANTIC)
+
+target_link_libraries(tests2
+  ${GTEST_LIBRARY}
+  ${GMOCK_LIBRARY}
+  ${PTHREAD_LIBRARY})
 
 
-# Check by compiller debug
-add_definitions(-D_GLIBCXX_DEBUG)
-add_definitions(-D_GLIBCXX_DEBUG_PEDANTIC)
+# ****************
+# * Test sanitized
+add_executable(tests tests.cpp)
 
-# Check by sanitizers
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+target_compile_features(tests PUBLIC cxx_std_17)
 
+set_target_properties(tests PROPERTIES
+  CXX_EXTENSIONS OFF
+  POSITION_INDEPENDENT_CODE ON)
 
-add_executable(tests ${SOURCE_EXE})
-target_link_libraries(tests ${GTEST_LIBRARY} ${GMOCK_LIBRARY} ${PTHREAD_LIBRARY})
+target_compile_options(tests
+  PRIVATE "-Wall"
+  PRIVATE "-Wextra"
+  PRIVATE "-Wshadow"
+  PRIVATE "-pedantic"
+  PRIVATE "-Werror"
+  PRIVATE "-Weffc++"
+  PRIVATE "-O2")
+
+# Sanitizers
+target_compile_options(tests
+  PRIVATE "-g"
+  PRIVATE "-fno-omit-frame-pointer"
+  PRIVATE "-fno-optimize-sibling-calls"
+  PRIVATE "-fsanitize=address")
+target_link_libraries(tests
+  -fsanitize=address
+)
+
+target_link_libraries(tests
+  ${GTEST_LIBRARY}
+  ${GMOCK_LIBRARY}
+  ${PTHREAD_LIBRARY})

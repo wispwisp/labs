@@ -3,7 +3,7 @@
 
 using ::testing::Eq;
 
-#if 0
+#ifdef _GLIBCXX_DEBUG
 TEST(TestOutOfRange, TestOutOfRange)
 {
   std::vector<int> v{9};
@@ -12,6 +12,7 @@ TEST(TestOutOfRange, TestOutOfRange)
 }
 #endif
 
+#ifndef _GLIBCXX_DEBUG
 const std::string& make_str() {
   const std::vector<std::string> strs {
     "str1",
@@ -26,7 +27,7 @@ TEST(TestOutOfRange, TestOutOfRange2)
   const auto& s = make_str();
   std::cout << s << std::endl;
 }
-
+#endif
 
 int main(int argc, char **argv) {
   testing::InitGoogleMock(&argc, argv);
